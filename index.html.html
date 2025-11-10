@@ -1,0 +1,188 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Calculadora de Refinado — Star Citizen</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1720; --muted:#9fb4c8; --accent:#1e88e5; --success:#00bfa5; --danger:#ff7043; --glass: rgba(255,255,255,0.03);
+      --radius:12px; --pad:14px;
+      font-family: Inter, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%;margin:0;background:linear-gradient(180deg,#091018 0%, #061018 100%);color:#e6f0f6}
+    .wrap{max-width:820px;margin:40px auto;padding:20px}
+    header{display:flex;align-items:center;gap:16px;margin-bottom:18px}
+    .logo{width:64px;height:64px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#6dd5fa);display:flex;align-items:center;justify-content:center;font-weight:700;color:#04213a}
+    h1{font-size:20px;margin:0}
+    p.lead{margin:4px 0 0;color:var(--muted);font-size:13px}
+
+    .panel{background:var(--panel);padding:16px;border-radius:var(--radius);box-shadow:0 6px 30px rgba(4,12,20,0.6);}
+    .grid{display:grid;grid-template-columns:1fr 120px 120px 140px;gap:10px;align-items:center}
+    label{font-size:12px;color:var(--muted)}
+    input[type=number], input[type=text], select{width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:var(--glass);color:inherit;font-size:14px}
+    input[type=number]::-webkit-outer-spin-button,input[type=number]::-webkit-inner-spin-button{margin:0}
+    .actions{display:flex;gap:8px}
+    button.primary{background:var(--accent);border:none;padding:10px 14px;border-radius:10px;color:white;font-weight:600;cursor:pointer}
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+
+    .result{display:flex;gap:12px;margin-top:14px}
+    .card{flex:1;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:12px;border-radius:10px}
+    .card h3{margin:0;font-size:13px;color:var(--muted)}
+    .card .big{font-size:28px;font-weight:700;margin-top:6px}
+    .badge{display:inline-block;padding:6px 10px;border-radius:999px;font-weight:700}
+    .badge.green{background:rgba(0,191,165,0.12);color:var(--success)}
+    .badge.red{background:rgba(255,112,67,0.08);color:var(--danger)}
+
+    .link-button{display:inline-flex;gap:8px;align-items:center;text-decoration:none}
+    footer{margin-top:14px;color:var(--muted);font-size:13px;display:flex;justify-content:space-between;align-items:center}
+
+    @media(max-width:700px){.grid{grid-template-columns:1fr;grid-auto-rows:auto}.wrap{margin:18px}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="logo">SC</div>
+      <div>
+        <h1>Calculadora de Refinado — Star Citizen</h1>
+        <p class="lead">Introduce cuántas cajas sin refinar tienes y te diré cuántas cajas refinadas obtendrás (por defecto 7 → 1)</p>
+      </div>
+    </header>
+
+    <div class="panel">
+      <div class="grid">
+        <div>
+          <label for="material">Material (opcional)</label>
+          <input id="material" type="text" placeholder="p. ej. Construction Materials" value="Construction Materials">
+        </div>
+
+        <div>
+          <label for="cantidad">Cajas sin refinar</label>
+          <input id="cantidad" type="number" min="0" value="0">
+        </div>
+
+        <div>
+          <label for="ratio">Ratio (cajas por 1 refinada)</label>
+          <input id="ratio" type="number" min="1" value="7">
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <label style="visibility:hidden">calcular</label>
+          <div class="actions">
+            <button id="calc" class="primary">Calcular</button>
+            <button id="reset" class="ghost">Reset</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="result">
+        <div class="card" style="min-width:160px">
+          <h3>Cajas refinadas</h3>
+          <div id="refinadas" class="big">0</div>
+        </div>
+
+        <div class="card" style="min-width:160px">
+          <h3>Sobrantes</h3>
+          <div id="sobrantes" class="big">0</div>
+        </div>
+
+        <div class="card">
+          <h3>Ratio usado</h3>
+          <div id="ratioUsed" class="big" style="font-size:18px">1 refinada cada <span id="rUsed">7</span> cajas</div>
+        </div>
+
+        <div class="card" style="display:flex;flex-direction:column;justify-content:center;align-items:flex-end">
+          <div style="width:100%">
+            <h3>Acciones</h3>
+            <div style="margin-top:8px;display:flex;gap:8px;justify-content:flex-end">
+              <a id="openTrade" class="link-button" target="_blank" rel="noopener noreferrer">
+                <button class="ghost">Abrir SC Trade Tools</button>
+              </a>
+              <button id="copyLink" class="ghost">Copiar link</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;color:var(--muted);font-size:13px">Consejo: ajusta el <strong>ratio</strong> si cambia la mecánica o si quieres simular diferentes porcentajes de refinado.</div>
+    </div>
+
+    <footer>
+      <div>Hecho para tu hoja de Star Citizen • Pulsa Calcular o presiona Enter</div>
+      <div style="opacity:0.9">LVL60 • UI estilo sci‑fi</div>
+    </footer>
+  </div>
+
+  <script>
+    // Link proporcionado por el usuario
+    const tradeLink = `https://sc-trade.tools/best-buyer?q=%7B%22ship%22:%22C2%20Hercules%20Starlifter%22,%22investment%22:4000000,%22origin%22:%22Stanton%20%3E%20ArcCorp%20%3E%20Baijini%20Point%22,%22itemName%22:%22Construction%20Materials%22,%22itemQuantityInScu%22:1,%22profitType%22:%22pure%22,%22allowWaitTimes%22:true%7D`;
+
+    const cantidad = document.getElementById('cantidad');
+    const ratio = document.getElementById('ratio');
+    const refinadas = document.getElementById('refinadas');
+    const sobrantes = document.getElementById('sobrantes');
+    const rUsed = document.getElementById('rUsed');
+    const calc = document.getElementById('calc');
+    const reset = document.getElementById('reset');
+    const openTrade = document.getElementById('openTrade');
+    const copyLink = document.getElementById('copyLink');
+    const material = document.getElementById('material');
+
+    function calcular(){
+      const n = Math.max(0, Math.floor(Number(cantidad.value) || 0));
+      const r = Math.max(1, Math.floor(Number(ratio.value) || 7));
+      const refined = Math.floor(n / r);
+      const rem = n % r;
+      refinadas.textContent = refined;
+      sobrantes.textContent = rem;
+      rUsed.textContent = r;
+      // cambia apariencia según sobrantes
+      if(rem === 0){
+        sobrantes.className = 'big';
+      } else {
+        sobrantes.className = 'big badge red';
+      }
+      // actualiza link dinámico con itemName si se quiere
+      try{
+        const params = encodeURIComponent(JSON.stringify({
+          ship: 'C2 Hercules Starlifter',
+          investment: 4000000,
+          origin: 'Stanton > ArcCorp > Baijini Point',
+          itemName: material.value || 'Construction Materials',
+          itemQuantityInScu: 1,
+          profitType: 'pure',
+          allowWaitTimes: true
+        }));
+        openTrade.href = 'https://sc-trade.tools/best-buyer?q=' + params;
+      }catch(e){
+        openTrade.href = tradeLink;
+      }
+    }
+
+    calc.addEventListener('click', calcular);
+    reset.addEventListener('click', ()=>{
+      cantidad.value = 0; ratio.value = 7; material.value = 'Construction Materials'; refinadas.textContent = 0; sobrantes.textContent = 0; rUsed.textContent = 7; sobrantes.className = 'big'; openTrade.href = tradeLink;
+    });
+
+    copyLink.addEventListener('click', async ()=>{
+      const href = openTrade.href || tradeLink;
+      try{
+        await navigator.clipboard.writeText(href);
+        copyLink.textContent = 'Copiado ✅';
+        setTimeout(()=> copyLink.textContent = 'Copiar link',1200);
+      }catch(e){
+        copyLink.textContent = 'Copiar — fallo';
+        setTimeout(()=> copyLink.textContent = 'Copiar link',1200);
+      }
+    });
+
+    // permitir Enter para calcular
+    [cantidad, ratio, material].forEach(el=>el.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') calcular(); }));
+
+    // init
+    openTrade.href = tradeLink;
+  </script>
+</body>
+</html>
